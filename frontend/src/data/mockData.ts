@@ -18,6 +18,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
         id: 'm1-1',
         role: 'user',
         content: 'What are the main patterns for implementing distributed locks in Go, and how do Redis Redlock vs etcd compare?',
+        timestamp: '2026-08-31T10:40:00Z',
         createdAt: '10:40 AM',
         status: 'complete',
       },
@@ -54,6 +55,7 @@ m.Unlock(context.Background())
 \`\`\`
 
 **Recommendation**: Use **etcd** when safety and correctness are paramount; use **Redis** when high throughput is needed and intermittent lock loss under partition is tolerable.`,
+        timestamp: '2026-08-31T10:42:00Z',
         createdAt: '10:42 AM',
         status: 'complete',
       },
@@ -69,6 +71,7 @@ m.Unlock(context.Background())
         id: 'm2-1',
         role: 'user',
         content: 'How does theme token customization work in Tailwind CSS v4 without a tailwind.config.js file?',
+        timestamp: '2026-08-31T09:12:00Z',
         createdAt: '09:12 AM',
         status: 'complete',
       },
@@ -89,6 +92,7 @@ m.Unlock(context.Background())
 \`\`\`
 
 Any \`--color-*\` token defined in \`@theme\` automatically generates utilities like \`bg-surface-0\`, \`text-accent-base\`, and \`border-surface-1\`.`,
+        timestamp: '2026-08-31T09:15:00Z',
         createdAt: '09:15 AM',
         status: 'complete',
       },
@@ -104,6 +108,7 @@ Any \`--color-*\` token defined in \`@theme\` automatically generates utilities 
         id: 'm3-1',
         role: 'user',
         content: 'Can you demonstrate the difference between type annotations and the satisfies operator in TypeScript?',
+        timestamp: '2026-08-30T16:00:00Z',
         createdAt: 'Yesterday',
         status: 'complete',
       },
@@ -128,6 +133,7 @@ const paletteB = {
 
 // paletteB.primary.toUpperCase() -> Valid string method!
 \`\`\``,
+        timestamp: '2026-08-30T16:05:00Z',
         createdAt: 'Yesterday',
         status: 'complete',
       },

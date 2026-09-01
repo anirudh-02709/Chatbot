@@ -2,13 +2,28 @@ export type MessageRole = 'user' | 'assistant'
 
 export type MessageStatus = 'generating' | 'complete' | 'error'
 
+export type AttachmentStatus = 'pending' | 'uploading' | 'uploaded' | 'error'
+
+export interface Attachment {
+  id: string
+  name: string
+  size: number
+  mimeType: string
+  status: AttachmentStatus
+  uploadedAt?: string
+  errorDetail?: string
+  progress?: number
+}
+
 export interface Message {
   id: string
   role: MessageRole
   content: string
+  timestamp: string
   createdAt: string
   status: MessageStatus
   errorDetail?: string
+  attachments?: Attachment[]
 }
 
 export interface Conversation {
@@ -17,6 +32,15 @@ export interface Conversation {
   createdAt: string
   updatedAt: string
   messages: Message[]
+}
+
+export type AppSettings = Record<string, unknown>
+
+export interface PersistedAppState {
+  version: 1
+  conversations: Conversation[]
+  selectedConversationId: string | null
+  settings: AppSettings
 }
 
 export interface PromptStarter {

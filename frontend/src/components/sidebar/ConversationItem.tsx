@@ -1,5 +1,5 @@
 import React from 'react'
-import { MessageSquare, MoreHorizontal } from 'lucide-react'
+import { MessageSquare, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Conversation } from '@/types'
 
@@ -7,6 +7,7 @@ interface ConversationItemProps {
   conversation: Conversation
   isActive: boolean
   onSelect: (id: string) => void
+  onDelete: (id: string) => void
 }
 
 function formatDisplayDate(dateStr: string): string {
@@ -30,6 +31,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   conversation,
   isActive,
   onSelect,
+  onDelete,
 }) => {
   const displayTime = formatDisplayDate(conversation.updatedAt || conversation.createdAt)
 
@@ -78,17 +80,17 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           {displayTime}
         </span>
 
-        {/* Action Options Button */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation()
+            onDelete(conversation.id)
           }}
-          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1 rounded hover:bg-surface-3 text-text-dim hover:text-text-primary transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-focus cursor-pointer"
-          aria-label={`Options for ${conversation.title}`}
-          title="Conversation options"
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1 rounded hover:bg-surface-3 text-text-dim hover:text-red-300 transition-opacity focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-focus cursor-pointer"
+          aria-label={`Delete ${conversation.title}`}
+          title="Delete conversation"
         >
-          <MoreHorizontal className="w-3.5 h-3.5" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

@@ -14,6 +14,7 @@ interface SidebarProps {
   activeConversationId: string | null
   modelStatus: ModelStatus
   onSelectConversation: (id: string) => void
+  onDeleteConversation: (id: string) => void
   onNewConversation: () => void
   onCloseMobile?: () => void
 }
@@ -23,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeConversationId,
   modelStatus,
   onSelectConversation,
+  onDeleteConversation,
   onNewConversation,
   onCloseMobile,
 }) => {
@@ -85,6 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onSelectConversation(id)
           if (onCloseMobile) onCloseMobile()
         }}
+        onDeleteConversation={onDeleteConversation}
       />
 
       {/* Lower Utility Area */}

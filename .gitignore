@@ -47,3 +47,7 @@ backend/.env.*
 # TypeScript build info cache
 *.tsbuildinfo
 frontend/*.tsbuildinfo
+
+# Local file storage & uploads
+storage/
+backend/storage/

@@ -7,6 +7,7 @@ interface ConversationListProps {
   conversations: Conversation[]
   activeId: string | null
   onSelectConversation: (id: string) => void
+  onDeleteConversation: (id: string) => void
 }
 
 function getCategoryForDate(dateStr: string): 'Today' | 'Yesterday' | 'Previous 7 Days' {
@@ -33,6 +34,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
   activeId,
   onSelectConversation,
+  onDeleteConversation,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -109,6 +111,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                     conversation={conv}
                     isActive={conv.id === activeId}
                     onSelect={onSelectConversation}
+                    onDelete={onDeleteConversation}
                   />
                 ))}
               </div>

@@ -8,6 +8,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import type { Message } from '@/types'
+import { AttachmentChip } from '@/components/workspace/AttachmentChip'
 
 interface MessageItemProps {
   message: Message
@@ -68,6 +69,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const isUser = message.role === 'user'
   const isGenerating = message.status === 'generating'
   const isError = message.status === 'error'
+  const hasAttachments = Boolean(message.attachments && message.attachments.length > 0)
 
   const handleCopy = async () => {
     try {
@@ -83,8 +85,21 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     return (
       <div className="flex justify-end w-full py-1.5">
         <div className="flex items-start gap-2.5 max-w-2xl">
-          <div className="rounded-lg bg-surface-2 border border-surface-border px-4 py-2.5 text-xs sm:text-sm text-text-primary shadow-xs">
-            <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+          <div className="rounded-lg bg-surface-2 border border-surface-border px-4 py-2.5 text-xs sm:text-sm text-text-primary shadow-xs space-y-2">
+            {hasAttachments && (
+              <div className="flex flex-wrap gap-1.5 pb-1 border-b border-surface-border/50">
+                {message.attachments!.map((att) => (
+                  <AttachmentChip
+                    key={att.id}
+                    attachment={att}
+                    className="bg-surface-3/80 border-surface-border/80"
+                  />
+                ))}
+              </div>
+            )}
+            {message.content && (
+              <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+            )}
             <span className="block text-[10px] text-text-dim text-right mt-1 font-mono">
               {message.createdAt}
             </span>

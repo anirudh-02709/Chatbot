@@ -19,6 +19,29 @@ class Settings(BaseSettings):
         "Be honest if you do not know something or if an instruction is unclear."
     )
 
+    # File upload and storage configuration
+    upload_dir: str = "storage/uploads"
+    max_upload_size_bytes: int = 10 * 1024 * 1024  # 10 MB limit
+    allowed_extensions: list[str] = [
+        ".pdf",
+        ".txt",
+        ".md",
+        ".csv",
+        ".json",
+        ".docx",
+    ]
+    allowed_mime_types: list[str] = [
+        "application/pdf",
+        "text/plain",
+        "text/markdown",
+        "text/x-markdown",
+        "text/csv",
+        "application/csv",
+        "application/json",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/octet-stream",
+    ]
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

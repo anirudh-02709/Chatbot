@@ -1,10 +1,14 @@
 from typing import Literal, Optional, Any
 from pydantic import BaseModel, Field
 
+from app.models.file import Attachment
+
 
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant", "system"]
     content: str = Field(..., min_length=1)
+    attachments: Optional[list[Attachment]] = None
+
 
 
 class ChatRequest(BaseModel):

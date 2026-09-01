@@ -10,7 +10,7 @@ import {
   PROMPT_STARTERS,
   INITIAL_MODEL_STATUS,
 } from '@/data/mockData'
-import type { ModelStatus } from '@/types'
+import type { ModelStatus, Attachment } from '@/types'
 
 export const App: React.FC = () => {
   const [modelStatus, setModelStatus] = useState<ModelStatus>(INITIAL_MODEL_STATUS)
@@ -24,6 +24,7 @@ export const App: React.FC = () => {
     isGenerating,
     createConversation,
     selectConversation,
+    deleteConversation,
     sendMessage,
     stopGeneration,
     regenerateLastMessage,
@@ -70,11 +71,12 @@ export const App: React.FC = () => {
     setComposerText(prompt)
   }
 
-  const handleSend = () => {
-    if (!composerText.trim() || isGenerating) return
+  const handleSend = (attachments?: Attachment[]) => {
     const textToSend = composerText
+    const hasAttachments = Boolean(attachments && attachments.length > 0)
+    if ((!textToSend.trim() && !hasAttachments) || isGenerating) return
     setComposerText('')
-    sendMessage(textToSend)
+    sendMessage(textToSend, attachments)
   }
 
   return (
@@ -85,6 +87,7 @@ export const App: React.FC = () => {
           activeConversationId={activeConversationId}
           modelStatus={modelStatus}
           onSelectConversation={selectConversation}
+          onDeleteConversation={deleteConversation}
           onNewConversation={() => {
             createConversation()
             setComposerText('')
@@ -123,6 +126,7 @@ export const App: React.FC = () => {
 
           {/* Composer */}
           <Composer
+            key={activeConversationId || 'new'}
             value={composerText}
             onChange={setComposerText}
             onSend={handleSend}
