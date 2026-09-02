@@ -1,0 +1,16 @@
+employee_id,full_name,title,department,email,salary_band,location,start_date,manager_id
+EMP-001,Alice Johnson,Chief Technology Officer,Technology,alice.johnson@acme.com,L9,New York,2019-03-01,
+EMP-002,Bob Martinez,Software Engineer,Engineering,bob.martinez@acme.com,L4,Austin,2022-06-15,EMP-008
+EMP-003,Dr. Carol White,Head of Research,Research,carol.white@acme.com,L8,Boston,2020-09-01,EMP-001
+EMP-004,David Park,Senior Product Manager,Product,david.park@acme.com,L6,San Francisco,2021-01-10,EMP-012
+EMP-005,Emma Singh,Principal Data Scientist,Analytics,emma.singh@acme.com,L7,Austin,2020-04-20,EMP-003
+EMP-006,Frank Torres,DevOps Lead,Infrastructure,frank.torres@acme.com,L6,Remote,2021-07-05,EMP-001
+EMP-007,Grace Kim,UX Design Lead,Design,grace.kim@acme.com,L6,New York,2022-02-14,EMP-012
+EMP-008,Hector Reyes,Engineering Manager,Engineering,hector.reyes@acme.com,L7,Austin,2019-11-01,EMP-001
+EMP-009,Isabel Santos,Security Engineer,Security,isabel.santos@acme.com,L5,Remote,2023-03-20,EMP-006
+EMP-010,James Liu,Staff Software Engineer,Engineering,james.liu@acme.com,L6,Austin,2020-08-15,EMP-008
+EMP-011,Karen Obi,Financial Controller,Finance,karen.obi@acme.com,L7,New York,2018-05-01,EMP-013
+EMP-012,Luis Fernandez,Chief Product Officer,Product,luis.fernandez@acme.com,L9,San Francisco,2017-10-01,
+EMP-013,Maria Kovacs,Chief Financial Officer,Finance,maria.kovacs@acme.com,L9,New York,2016-08-15,
+EMP-014,Nathan Brooks,Machine Learning Engineer,Analytics,nathan.brooks@acme.com,L5,Remote,2023-09-01,EMP-005
+EMP-015,Olivia Chen,Technical Writer,Engineering,olivia.chen@acme.com,L3,Remote,2024-01-15,EMP-008

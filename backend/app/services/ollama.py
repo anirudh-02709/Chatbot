@@ -103,13 +103,21 @@ class OllamaService:
         return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
     async def stream_chat(
-        self, messages: list[ChatMessage]
+        self,
+        messages: list[ChatMessage],
+        rag_context: Optional[str] = None,
+        rag_meta: Optional[dict] = None,
     ) -> AsyncGenerator[str, None]:
         """
         Stream chat completion from Ollama and normalize NDJSON into our SSE protocol.
+        Optionally augments system prompt with grounded RAG context.
         """
         # 1. Build sanitized Ollama messages list
-        payload_messages = [{"role": "system", "content": self.settings.system_prompt}]
+        system_content = self.settings.system_prompt
+        if rag_context:
+            system_content = f"{self.settings.system_prompt}\n\n{rag_context}"
+
+        payload_messages = [{"role": "system", "content": system_content}]
         for msg in messages:
             if msg.role in ("user", "assistant"):
                 payload_messages.append({"role": msg.role, "content": msg.content})
@@ -121,8 +129,11 @@ class OllamaService:
             "think": self.settings.enable_thinking,
         }
 
-        # Yield initial start event
-        yield self._format_sse("start", {"model": self.settings.model_name})
+        # Yield initial start event with optional RAG diagnostics
+        start_payload: dict[str, Any] = {"model": self.settings.model_name}
+        if rag_meta:
+            start_payload["rag"] = rag_meta
+        yield self._format_sse("start", start_payload)
 
         client = httpx.AsyncClient(timeout=self.settings.request_timeout_seconds)
         try:

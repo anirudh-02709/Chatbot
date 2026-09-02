@@ -42,6 +42,30 @@ class Settings(BaseSettings):
         "application/octet-stream",
     ]
 
+    # Document Chunking Configuration
+    default_chunk_size: int = 1000  # Target characters per chunk (~200-250 tokens)
+    default_chunk_overlap: int = 150  # Overlap characters between contiguous split chunks
+    min_chunk_size: int = 100  # Minimum character length to avoid tiny trailing fragments
+
+    # Local Embedding Configuration
+    embedding_provider: str = "ollama"
+    embedding_model: str = "nomic-embed-text"
+    embedding_dimensions: int = 768
+    embedding_batch_size: int = 32
+    embedding_timeout_seconds: float = 60.0
+
+    # Local Vector Store & Retrieval Configuration
+    vector_store_dir: str = "storage/vector_store"
+    similarity_top_k: int = 5
+    similarity_min_score: float = 0.0
+
+    # RAG (Retrieval-Augmented Generation) Configuration
+    rag_enabled: bool = True
+    rag_top_k: int = 5
+    rag_candidate_pool_size: int = 10
+    rag_min_score: float = 0.48
+    rag_max_context_characters: int = 12000
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -1,0 +1,88 @@
+PROJECT ATLAS — Status Report
+Version: 2.4
+Date: August 1, 2026
+
+===========================================================================
+EXECUTIVE SUMMARY
+===========================================================================
+
+Project Atlas is an enterprise data platform consolidation initiative aimed
+at migrating six legacy business intelligence systems onto a unified modern
+analytics stack. The project is currently in Phase 3 (Data Migration).
+
+Status: AMBER — Q2 milestone delayed.
+
+===========================================================================
+PROJECT DETAILS
+===========================================================================
+
+Project Name:     Project Atlas
+Start Date:       January 15, 2025
+Projected End:    Q3 2026 (September 30, 2026)
+Original Budget:  $2,400,000 (USD)
+Spent to Date:    $1,847,000 (USD)
+Remaining:        $553,000 (USD)
+
+===========================================================================
+LEADERSHIP
+===========================================================================
+
+Project Lead:       Marcus Webb
+Engineering Lead:   Dr. Priya Sharma
+Data Architect:     James Okafor
+QA Lead:            Sofia Reyes
+Product Owner:      Dr. Kenji Watanabe
+
+===========================================================================
+TECHNICAL STACK
+===========================================================================
+
+Backend Language:   Python 3.12
+API Framework:      FastAPI 0.115
+Database:           PostgreSQL 16
+Frontend:           React 19
+Containerization:   Docker 27 / Kubernetes 1.30
+Message Queue:      Apache Kafka 3.8
+Service Count:      47 microservices
+
+===========================================================================
+DELIVERY METRICS
+===========================================================================
+
+Current Sprint:         Sprint 68
+Sprint Velocity:        38 story points per week (8-week rolling average)
+Backlog Items:          214 remaining
+Defects (open):         31 (7 critical, 24 minor)
+Test Coverage:          84.7%
+
+===========================================================================
+MILESTONE STATUS
+===========================================================================
+
+Q1 2025: Project Kickoff          COMPLETE
+Q3 2025: Architecture Finalized   COMPLETE
+Q1 2026: Phase 2 Complete         COMPLETE
+Q2 2026: Data Migration Start     DELAYED — missed by 3 weeks due to
+                                   data model incompatibility in the
+                                   legacy HR system (Workday v18).
+Q3 2026: Final Delivery           AT RISK (3-week buffer consumed)
+
+===========================================================================
+RISKS
+===========================================================================
+
+RISK-001: Budget overrun if Q3 2026 deadline slips further.
+RISK-002: PostgreSQL 16 migration from Oracle requires schema rewrite.
+RISK-003: 47 microservices complexity increasing integration test time.
+
+===========================================================================
+NOTE ON BUDGET
+===========================================================================
+
+An earlier budget estimate of $2,800,000 appeared in a financial planning
+document from November 2024. The approved final budget is $2,400,000.
+The $2,800,000 figure is SUPERSEDED and should not be used as the reference.
+
+===========================================================================
+END OF REPORT
+===========================================================================

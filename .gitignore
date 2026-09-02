@@ -48,6 +48,13 @@ backend/.env.*
 *.tsbuildinfo
 frontend/*.tsbuildinfo
 
-# Local file storage & uploads
+# Local file storage, uploads & SQLite databases
 storage/
 backend/storage/
+backend/evaluation/
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+*.tmp

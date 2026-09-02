@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routes.chat import router as chat_router
 from app.routes.files import router as files_router
+from app.routes.documents import router as documents_router
+from app.routes.search import router as search_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,6 +47,8 @@ app.add_middleware(
 # Mount API routes
 app.include_router(chat_router)
 app.include_router(files_router)
+app.include_router(documents_router)
+app.include_router(search_router)
 
 
 @app.get("/")
