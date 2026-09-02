@@ -9,55 +9,12 @@ import {
 } from 'lucide-react'
 import type { Message } from '@/types'
 import { AttachmentChip } from '@/components/workspace/AttachmentChip'
+import { MarkdownRenderer } from '@/components/workspace/MarkdownRenderer'
 
 interface MessageItemProps {
   message: Message
   isLatestAssistant?: boolean
   onRegenerate?: () => void
-}
-
-// Lightweight, safe markdown/code block parser for chat rendering
-function renderFormattedContent(content: string) {
-  if (!content) return null
-
-  // Split by code blocks ```
-  const parts = content.split(/(```[\s\S]*?```)/g)
-
-  return parts.map((part, index) => {
-    if (part.startsWith('```') && part.endsWith('```')) {
-      const lines = part.slice(3, -3).trim().split('\n')
-      const language = lines[0]?.match(/^[a-zA-Z0-9_-]+$/) ? lines[0] : ''
-      const code = language ? lines.slice(1).join('\n') : lines.join('\n')
-
-      return (
-        <div key={index} className="my-2.5 rounded-md border border-surface-border bg-surface-0 overflow-hidden text-xs">
-          {language && (
-            <div className="px-3 py-1 bg-surface-2/60 border-b border-surface-border text-[10px] font-mono text-text-dim uppercase tracking-wider flex justify-between items-center">
-              <span>{language}</span>
-            </div>
-          )}
-          <pre className="p-3 overflow-x-auto font-mono text-text-secondary leading-relaxed">
-            <code>{code}</code>
-          </pre>
-        </div>
-      )
-    }
-
-    // Split regular text into paragraphs
-    const paragraphs = part.split('\n\n')
-    return (
-      <div key={index} className="space-y-2">
-        {paragraphs.map((p, pIdx) => {
-          if (!p.trim()) return null
-          return (
-            <p key={pIdx} className="leading-relaxed whitespace-pre-wrap">
-              {p}
-            </p>
-          )
-        })}
-      </div>
-    )
-  })
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -135,7 +92,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         {/* Message Content */}
         <div className="text-xs sm:text-sm text-text-secondary">
           {message.content ? (
-            renderFormattedContent(message.content)
+            <MarkdownRenderer content={message.content} />
           ) : isGenerating ? (
             <div className="flex items-center gap-1.5 py-1 text-xs text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-base animate-pulse" />
