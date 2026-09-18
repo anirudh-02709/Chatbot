@@ -15,6 +15,34 @@ export interface Attachment {
   progress?: number
 }
 
+export type AppMode = 'chat' | 'agent'
+
+export interface AgentToolCallSummary {
+  tool_name: string
+  status: string
+  success: boolean
+  duration_ms?: number
+  error_type?: string
+  arguments?: Record<string, unknown>
+}
+
+export interface AgentActivity {
+  status: string
+  termination_reason?: string
+  iteration_count: number
+  total_duration_ms?: number
+  tool_calls: AgentToolCallSummary[]
+}
+
+export interface AgentRunResponse {
+  answer: string
+  status: string
+  termination_reason?: string
+  iteration_count: number
+  total_duration_ms?: number
+  tool_calls: AgentToolCallSummary[]
+}
+
 export interface Message {
   id: string
   role: MessageRole
@@ -24,6 +52,8 @@ export interface Message {
   status: MessageStatus
   errorDetail?: string
   attachments?: Attachment[]
+  agentActivity?: AgentActivity
+  appMode?: AppMode
 }
 
 export interface Conversation {
@@ -38,6 +68,7 @@ export type GenerationMode = 'local_gemma' | 'omniroute'
 
 export interface AppSettings {
   generationMode?: GenerationMode
+  appMode?: AppMode
   [key: string]: unknown
 }
 

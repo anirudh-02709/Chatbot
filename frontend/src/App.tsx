@@ -24,6 +24,8 @@ export const App: React.FC = () => {
     isGenerating,
     generationMode,
     setGenerationMode,
+    appMode,
+    setAppMode,
     createConversation,
     selectConversation,
     deleteConversation,
@@ -83,9 +85,11 @@ export const App: React.FC = () => {
   }
 
   const composerPlaceholder =
-    generationMode === 'local_gemma'
-      ? 'Draft a question or instruction for Gemma...'
-      : 'Draft a question or instruction for OmniRoute...'
+    appMode === 'agent'
+      ? 'Instruct the agent (e.g. "Search docs for quantum crypto and calculate..." or "Web search for latest news")...'
+      : generationMode === 'local_gemma'
+        ? 'Draft a question or instruction for Gemma...'
+        : 'Draft a question or instruction for OmniRoute...'
 
   return (
     <AppShell
@@ -113,6 +117,8 @@ export const App: React.FC = () => {
             modelStatus={modelStatus}
             generationMode={generationMode}
             onSelectGenerationMode={setGenerationMode}
+            appMode={appMode}
+            onSelectAppMode={setAppMode}
             onToggleSidebar={onToggleSidebar}
           />
 
@@ -146,6 +152,7 @@ export const App: React.FC = () => {
             isGenerating={isGenerating}
             disabled={isGenerating}
             placeholder={composerPlaceholder}
+            appMode={appMode}
           />
         </main>
       )}

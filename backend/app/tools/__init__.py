@@ -64,10 +64,9 @@ from app.tools.executor import (
 )
 
 # Automatically register built-in tools with the global registry
-tool_registry.register(calculator_tool)
-tool_registry.register(document_search_tool)
-tool_registry.register(web_search_tool)
-tool_registry.register(data_analysis_tool)
+for _builtin in [calculator_tool, document_search_tool, web_search_tool, data_analysis_tool]:
+    if not tool_registry.has(_builtin.name):
+        tool_registry.register(_builtin)
 
 __all__ = [
     "BaseTool",

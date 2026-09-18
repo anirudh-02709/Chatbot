@@ -1,4 +1,7 @@
 import type {
+  AppMode,
+  AgentActivity,
+  AgentToolCallSummary,
   AppSettings,
   Attachment,
   AttachmentStatus,
@@ -14,6 +17,7 @@ export const APP_STATE_STORAGE_VERSION = 1
 
 const DEFAULT_SETTINGS: AppSettings = {
   generationMode: 'omniroute',
+  appMode: 'chat',
 }
 
 function createDefaultAppState(): PersistedAppState {
@@ -89,6 +93,40 @@ function normalizeAttachment(value: unknown): Attachment | null {
   }
 }
 
+function normalizeAgentToolCall(value: unknown): AgentToolCallSummary | null {
+  if (!isRecord(value)) return null
+  const toolName = asString(value.tool_name)
+  if (!toolName) return null
+  return {
+    tool_name: toolName,
+    status: asString(value.status) ?? 'completed',
+    success: typeof value.success === 'boolean' ? value.success : true,
+    duration_ms: typeof value.duration_ms === 'number' ? value.duration_ms : undefined,
+    error_type: asString(value.error_type) ?? undefined,
+    arguments: isRecord(value.arguments) ? (value.arguments as Record<string, unknown>) : undefined,
+  }
+}
+
+function normalizeAgentActivity(value: unknown): AgentActivity | null {
+  if (!isRecord(value)) return null
+  const status = asString(value.status) ?? 'completed'
+  const terminationReason = asString(value.termination_reason) ?? undefined
+  const iterationCount = typeof value.iteration_count === 'number' ? value.iteration_count : 1
+  const totalDurationMs = typeof value.total_duration_ms === 'number' ? value.total_duration_ms : undefined
+  const rawToolCalls = Array.isArray(value.tool_calls) ? value.tool_calls : []
+  const toolCalls = rawToolCalls
+    .map(normalizeAgentToolCall)
+    .filter((tc): tc is AgentToolCallSummary => tc !== null)
+
+  return {
+    status,
+    termination_reason: terminationReason,
+    iteration_count: iterationCount,
+    total_duration_ms: totalDurationMs,
+    tool_calls: toolCalls,
+  }
+}
+
 function normalizeMessage(value: unknown): Message | null {
   if (!isRecord(value)) return null
 
@@ -108,6 +146,14 @@ function normalizeMessage(value: unknown): Message | null {
     .map(normalizeAttachment)
     .filter((att): att is Attachment => att !== null)
 
+  const agentActivity = isRecord(value.agentActivity)
+    ? normalizeAgentActivity(value.agentActivity)
+    : undefined
+  const appMode: AppMode | undefined =
+    value.appMode === 'agent' || value.appMode === 'chat'
+      ? value.appMode
+      : undefined
+
   return {
     id,
     role,
@@ -117,6 +163,8 @@ function normalizeMessage(value: unknown): Message | null {
     status,
     ...(errorDetail ? { errorDetail } : {}),
     ...(attachments.length > 0 ? { attachments } : {}),
+    ...(agentActivity ? { agentActivity } : {}),
+    ...(appMode ? { appMode } : {}),
   }
 }
 
@@ -146,7 +194,10 @@ function normalizeSettings(value: unknown): AppSettings {
   const mode = value.generationMode === 'local_gemma' || value.generationMode === 'omniroute'
     ? value.generationMode
     : 'omniroute'
-  return { ...value, generationMode: mode }
+  const appMode = value.appMode === 'agent' || value.appMode === 'chat'
+    ? value.appMode
+    : 'chat'
+  return { ...value, generationMode: mode, appMode }
 }
 
 function normalizeAppState(value: unknown): PersistedAppState | null {

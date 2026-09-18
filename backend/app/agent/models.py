@@ -28,6 +28,8 @@ class AgentStatus(str, Enum):
     DECIDING = "deciding"
     STEP_COMPLETED = "step_completed"
     COMPLETED = "completed"
+    MAX_ITERATIONS_REACHED = "max_iterations_reached"
+    LOOP_DETECTED = "loop_detected"
     ERROR = "error"
 
 
@@ -113,6 +115,27 @@ class AgentState(BaseModel):
     error: Optional[str] = Field(
         default=None,
         description="Error description if status is 'error'.",
+    )
+    decisions: list[AgentDecision] = Field(
+        default_factory=list,
+        description="Chronological history of all decisions made by the agent.",
+    )
+    observations: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Chronological history of tool observations returned to the agent.",
+    )
+    max_iterations: int = Field(
+        default=5,
+        ge=1,
+        description="Maximum orchestration loop iterations allowed.",
+    )
+    termination_reason: Optional[str] = Field(
+        default=None,
+        description="Detailed termination category: completed, max_iterations_reached, loop_detected, error.",
+    )
+    total_duration_ms: Optional[float] = Field(
+        default=None,
+        description="Total wall-clock duration of the agent loop in milliseconds.",
     )
     created_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),

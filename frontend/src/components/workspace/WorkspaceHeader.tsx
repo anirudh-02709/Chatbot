@@ -8,14 +8,18 @@ import {
   Check,
   Cpu,
   Globe,
+  Bot,
+  MessageSquare,
 } from 'lucide-react'
-import type { GenerationMode, ModelStatus } from '@/types'
+import type { GenerationMode, ModelStatus, AppMode } from '@/types'
 
 interface WorkspaceHeaderProps {
   title: string
   modelStatus: ModelStatus
   generationMode: GenerationMode
   onSelectGenerationMode: (mode: GenerationMode) => void
+  appMode: AppMode
+  onSelectAppMode: (mode: AppMode) => void
   onToggleSidebar: () => void
 }
 
@@ -24,6 +28,8 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   modelStatus,
   generationMode,
   onSelectGenerationMode,
+  appMode,
+  onSelectAppMode,
   onToggleSidebar,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -76,6 +82,38 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
 
       {/* Right: Model Selector & Utility Actions */}
       <div className="flex items-center gap-2">
+        {/* Mode Segmented Toggle: Chat vs Agent */}
+        <div className="flex items-center p-0.5 rounded-lg bg-surface-1 border border-surface-border text-xs">
+          <button
+            type="button"
+            onClick={() => onSelectAppMode('chat')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs transition-all cursor-pointer ${
+              appMode === 'chat'
+                ? 'bg-surface-3 text-text-primary shadow-xs'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
+            title="Chat mode (standard single-turn / RAG)"
+            aria-pressed={appMode === 'chat'}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Chat</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelectAppMode('agent')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs transition-all cursor-pointer ${
+              appMode === 'agent'
+                ? 'bg-accent-base/15 text-accent-base border border-accent-base/30 shadow-xs'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
+            title="Agent mode (autonomous multi-step tool execution)"
+            aria-pressed={appMode === 'agent'}
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Agent</span>
+          </button>
+        </div>
+
         {/* Interactive Model Selector Pill */}
         <div className="relative" ref={dropdownRef}>
           <button

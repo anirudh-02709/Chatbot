@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type {
+  AppMode,
   AppSettings,
   Attachment,
   Conversation,
@@ -10,6 +11,7 @@ import type {
 } from '@/types'
 import { MOCK_CONVERSATIONS } from '@/data/mockData'
 import { BackendResponseProvider } from '@/services/backendResponseService'
+import { runAgent } from '@/services/agentService'
 import {
   APP_STATE_STORAGE_VERSION,
   hasStoredAppState,
@@ -212,6 +214,7 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
   const activeConversation = conversations.find((c) => c.id === activeConversationId)
   const messages = activeConversation ? activeConversation.messages : []
   const generationMode: GenerationMode = (chatState.settings.generationMode as GenerationMode) || 'omniroute'
+  const appMode: AppMode = (chatState.settings.appMode as AppMode) || 'chat'
 
   const setGenerationMode = useCallback(
     (mode: GenerationMode) => {
@@ -222,6 +225,23 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
           settings: {
             ...currentState.settings,
             generationMode: mode,
+          },
+        },
+        { persist: true }
+      )
+    },
+    [commitChatState]
+  )
+
+  const setAppMode = useCallback(
+    (mode: AppMode) => {
+      const currentState = chatStateRef.current
+      commitChatState(
+        {
+          ...currentState,
+          settings: {
+            ...currentState.settings,
+            appMode: mode,
           },
         },
         { persist: true }
@@ -355,6 +375,7 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
         timestamp: nowISO,
         createdAt: timeStr,
         status: 'complete',
+        appMode,
         ...(hasAttachments ? { attachments } : {}),
       }
 
@@ -365,6 +386,7 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
         timestamp: nowISO,
         createdAt: timeStr,
         status: 'generating',
+        appMode,
       }
 
       const currentState = chatStateRef.current
@@ -420,14 +442,22 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
       const targetConvId = currentConvId
       activeStreamConversationId.current = targetConvId
 
-      const cancelFn = provider.streamResponse(
-        promptText,
-        currentHistory,
-        {
-          onChunk: (chunk: string) => {
-            queueChunk(assistantMessageId, chunk)
+      if (appMode === 'agent') {
+        const abortController = new AbortController()
+        abortCurrentStream.current = () => abortController.abort()
+
+        const attachmentIds = attachments?.map((a) => a.id).filter(Boolean)
+
+        runAgent(
+          {
+            message: promptText,
+            mode: generationMode,
+            conversation_id: targetConvId,
+            attachment_ids: attachmentIds && attachmentIds.length > 0 ? attachmentIds : undefined,
           },
-          onError: (err: Error) => {
+          abortController.signal
+        )
+          .then((agentRes) => {
             const flushedState = flushPendingChunks()
             setIsGenerating(false)
             abortCurrentStream.current = null
@@ -435,6 +465,52 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
               activeStreamConversationId.current = null
             }
             const completedAt = new Date().toISOString()
+            const isError = agentRes.status === 'error'
+            const conversations = flushedState.conversations.map((conv) => {
+              if (conv.id !== targetConvId) return conv
+              return {
+                ...conv,
+                updatedAt: completedAt,
+                messages: conv.messages.map((m) => {
+                  if (m.id !== assistantMessageId) return m
+                  return {
+                    ...m,
+                    content: agentRes.answer,
+                    status: isError ? ('error' as const) : ('complete' as const),
+                    errorDetail: isError ? agentRes.answer : undefined,
+                    agentActivity: {
+                      status: agentRes.status,
+                      termination_reason: agentRes.termination_reason,
+                      iteration_count: agentRes.iteration_count,
+                      total_duration_ms: agentRes.total_duration_ms,
+                      tool_calls: agentRes.tool_calls,
+                    },
+                    appMode: 'agent' as const,
+                  }
+                }),
+              }
+            })
+
+            commitChatState(
+              {
+                ...flushedState,
+                conversations,
+              },
+              { persist: true }
+            )
+          })
+          .catch((err: unknown) => {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+              return
+            }
+            const flushedState = flushPendingChunks()
+            setIsGenerating(false)
+            abortCurrentStream.current = null
+            if (activeStreamConversationId.current === targetConvId) {
+              activeStreamConversationId.current = null
+            }
+            const completedAt = new Date().toISOString()
+            const errorMsg = err instanceof Error ? err.message : 'Agent execution failed.'
             const conversations = flushedState.conversations.map((conv) => {
               if (conv.id !== targetConvId) return conv
               return {
@@ -445,7 +521,8 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
                   return {
                     ...m,
                     status: 'error' as const,
-                    errorDetail: err.message,
+                    errorDetail: errorMsg,
+                    appMode: 'agent' as const,
                   }
                 }),
               }
@@ -458,45 +535,87 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
               },
               { persist: true }
             )
-          },
-          onComplete: () => {
-            const flushedState = flushPendingChunks()
-            setIsGenerating(false)
-            abortCurrentStream.current = null
-            if (activeStreamConversationId.current === targetConvId) {
-              activeStreamConversationId.current = null
-            }
-            const completedAt = new Date().toISOString()
-            const conversations = flushedState.conversations.map((conv) => {
-              if (conv.id !== targetConvId) return conv
-              return {
-                ...conv,
-                updatedAt: completedAt,
-                messages: conv.messages.map((m) => {
-                  if (m.id !== assistantMessageId) return m
-                  return {
-                    ...m,
-                    status: 'complete' as const,
-                  }
-                }),
+          })
+      } else {
+        // Normal Chat Mode (SSE streaming via /api/chat)
+        const cancelFn = provider.streamResponse(
+          promptText,
+          currentHistory,
+          {
+            onChunk: (chunk: string) => {
+              queueChunk(assistantMessageId, chunk)
+            },
+            onError: (err: Error) => {
+              const flushedState = flushPendingChunks()
+              setIsGenerating(false)
+              abortCurrentStream.current = null
+              if (activeStreamConversationId.current === targetConvId) {
+                activeStreamConversationId.current = null
               }
-            })
+              const completedAt = new Date().toISOString()
+              const conversations = flushedState.conversations.map((conv) => {
+                if (conv.id !== targetConvId) return conv
+                return {
+                  ...conv,
+                  updatedAt: completedAt,
+                  messages: conv.messages.map((m) => {
+                    if (m.id !== assistantMessageId) return m
+                    return {
+                      ...m,
+                      status: 'error' as const,
+                      errorDetail: err.message,
+                    }
+                  }),
+                }
+              })
 
-            commitChatState(
-              {
-                ...flushedState,
-                conversations,
-              },
-              { persist: true }
-            )
+              commitChatState(
+                {
+                  ...flushedState,
+                  conversations,
+                },
+                { persist: true }
+              )
+            },
+            onComplete: () => {
+              const flushedState = flushPendingChunks()
+              setIsGenerating(false)
+              abortCurrentStream.current = null
+              if (activeStreamConversationId.current === targetConvId) {
+                activeStreamConversationId.current = null
+              }
+              const completedAt = new Date().toISOString()
+              const conversations = flushedState.conversations.map((conv) => {
+                if (conv.id !== targetConvId) return conv
+                return {
+                  ...conv,
+                  updatedAt: completedAt,
+                  messages: conv.messages.map((m) => {
+                    if (m.id !== assistantMessageId) return m
+                    return {
+                      ...m,
+                      status: 'complete' as const,
+                    }
+                  }),
+                }
+              })
+
+              commitChatState(
+                {
+                  ...flushedState,
+                  conversations,
+                },
+                { persist: true }
+              )
+            },
           },
-        },
-        generationMode
-      )
+          generationMode
+        )
 
-      abortCurrentStream.current = cancelFn
+        abortCurrentStream.current = cancelFn
+      }
     },
-    [commitChatState, flushPendingChunks, generationMode, isGenerating, provider, queueChunk]
+    [appMode, commitChatState, flushPendingChunks, generationMode, isGenerating, provider, queueChunk]
   )
 
   const regenerateLastMessage = useCallback(() => {
@@ -528,6 +647,7 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
     const nowISO = new Date(timestamp).toISOString()
     const assistantMessageId = `msg-a-${timestamp}`
     const timeStr = formatCurrentTime()
+    const isAgent = lastUserMsg.appMode === 'agent' || (!lastUserMsg.appMode && appMode === 'agent')
 
     const newAssistantMessage: Message = {
       id: assistantMessageId,
@@ -536,6 +656,7 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
       timestamp: nowISO,
       createdAt: timeStr,
       status: 'generating',
+      appMode: isAgent ? 'agent' : 'chat',
     }
 
     // Preserve all messages up to the user message being regenerated, then append the new assistant message
@@ -561,6 +682,103 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
     setIsGenerating(true)
     const targetConvId = activeConversation.id
     activeStreamConversationId.current = targetConvId
+
+    if (isAgent) {
+      const abortController = new AbortController()
+      abortCurrentStream.current = () => abortController.abort()
+
+      const attachmentIds = lastUserMsg.attachments?.map((a) => a.id).filter(Boolean)
+
+      runAgent(
+        {
+          message: lastUserMsg.content,
+          mode: generationMode,
+          conversation_id: targetConvId,
+          attachment_ids: attachmentIds && attachmentIds.length > 0 ? attachmentIds : undefined,
+        },
+        abortController.signal
+      )
+        .then((agentRes) => {
+          const flushedState = flushPendingChunks()
+          setIsGenerating(false)
+          abortCurrentStream.current = null
+          if (activeStreamConversationId.current === targetConvId) {
+            activeStreamConversationId.current = null
+          }
+          const completedAt = new Date().toISOString()
+          const isError = agentRes.status === 'error'
+          const updatedConversations = flushedState.conversations.map((conv) => {
+            if (conv.id !== targetConvId) return conv
+            return {
+              ...conv,
+              updatedAt: completedAt,
+              messages: conv.messages.map((m) => {
+                if (m.id !== assistantMessageId) return m
+                return {
+                  ...m,
+                  content: agentRes.answer,
+                  status: isError ? ('error' as const) : ('complete' as const),
+                  errorDetail: isError ? agentRes.answer : undefined,
+                  agentActivity: {
+                    status: agentRes.status,
+                    termination_reason: agentRes.termination_reason,
+                    iteration_count: agentRes.iteration_count,
+                    total_duration_ms: agentRes.total_duration_ms,
+                    tool_calls: agentRes.tool_calls,
+                  },
+                  appMode: 'agent' as const,
+                }
+              }),
+            }
+          })
+
+          commitChatState(
+            {
+              ...flushedState,
+              conversations: updatedConversations,
+            },
+            { persist: true }
+          )
+        })
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            return
+          }
+          const flushedState = flushPendingChunks()
+          setIsGenerating(false)
+          abortCurrentStream.current = null
+          if (activeStreamConversationId.current === targetConvId) {
+            activeStreamConversationId.current = null
+          }
+          const completedAt = new Date().toISOString()
+          const errorMsg = err instanceof Error ? err.message : 'Agent execution failed.'
+          const updatedConversations = flushedState.conversations.map((conv) => {
+            if (conv.id !== targetConvId) return conv
+            return {
+              ...conv,
+              updatedAt: completedAt,
+              messages: conv.messages.map((m) => {
+                if (m.id !== assistantMessageId) return m
+                return {
+                  ...m,
+                  status: 'error' as const,
+                  errorDetail: errorMsg,
+                  appMode: 'agent' as const,
+                }
+              }),
+            }
+          })
+
+          commitChatState(
+            {
+              ...flushedState,
+              conversations: updatedConversations,
+            },
+            { persist: true }
+          )
+        })
+      return
+    }
 
     const cancelFn = provider.streamResponse(
       lastUserMsg.content,
@@ -630,7 +848,7 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
     )
 
     abortCurrentStream.current = cancelFn
-  }, [commitChatState, flushPendingChunks, generationMode, isGenerating, provider, queueChunk])
+  }, [appMode, commitChatState, flushPendingChunks, generationMode, isGenerating, provider, queueChunk])
 
   return {
     conversations,
@@ -640,6 +858,8 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
     isGenerating,
     generationMode,
     setGenerationMode,
+    appMode,
+    setAppMode,
     createConversation,
     selectConversation,
     deleteConversation,

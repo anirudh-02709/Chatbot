@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { ArrowUp, Square, Paperclip, UploadCloud } from 'lucide-react'
-import type { Attachment } from '@/types'
+import type { Attachment, AppMode } from '@/types'
 import { fileService } from '@/services/fileService'
 import { validateFile, SUPPORTED_FILE_EXTENSIONS } from '@/constants/files'
 import { AttachmentChip } from '@/components/workspace/AttachmentChip'
@@ -14,6 +14,7 @@ interface ComposerProps {
   isGenerating?: boolean
   disabled?: boolean
   placeholder?: string
+  appMode?: AppMode
 }
 
 export const Composer: React.FC<ComposerProps> = ({
@@ -24,6 +25,7 @@ export const Composer: React.FC<ComposerProps> = ({
   isGenerating = false,
   disabled = false,
   placeholder = 'Draft a question or instruction for Gemma...',
+  appMode = 'chat',
 }) => {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -301,8 +303,17 @@ export const Composer: React.FC<ComposerProps> = ({
               <Paperclip className="w-3.5 h-3.5" />
             </button>
             <span className="text-[11px] text-text-dim hidden sm:inline-block">
-              {isUploadingAny ? 'Uploading attachments...' : 'Local context only'}
+              {isUploadingAny
+                ? 'Uploading attachments...'
+                : appMode === 'agent'
+                  ? 'Agent Mode · Autonomous multi-step'
+                  : 'Local context only'}
             </span>
+            {appMode === 'agent' && !isUploadingAny && (
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-accent-base/10 text-accent-base border border-accent-base/20 hidden sm:inline-block">
+                TOOLS ACTIVE
+              </span>
+            )}
           </div>
 
           {/* Right: Keyboard Hint & Send / Stop Button */}

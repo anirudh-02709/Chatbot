@@ -6,10 +6,12 @@ import {
   Check,
   RotateCw,
   AlertCircle,
+  Bot,
 } from 'lucide-react'
 import type { Message } from '@/types'
 import { AttachmentChip } from '@/components/workspace/AttachmentChip'
 import { MarkdownRenderer } from '@/components/workspace/MarkdownRenderer'
+import { AgentActivityView } from '@/components/workspace/AgentActivityView'
 
 interface MessageItemProps {
   message: Message
@@ -69,12 +71,20 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     )
   }
 
+  const isAgent = message.appMode === 'agent' || Boolean(message.agentActivity)
+
   // Assistant Message
   return (
     <div className="flex items-start gap-3 w-full py-3 group">
       {/* Assistant Avatar */}
-      <div className="flex items-center justify-center w-7 h-7 rounded-md bg-surface-2 border border-surface-border text-accent-base shrink-0 mt-0.5">
-        <Cpu className="w-4 h-4" />
+      <div
+        className={`flex items-center justify-center w-7 h-7 rounded-md border shrink-0 mt-0.5 ${
+          isAgent
+            ? 'bg-accent-base/10 border-accent-base/30 text-accent-base'
+            : 'bg-surface-2 border-surface-border text-accent-base'
+        }`}
+      >
+        {isAgent ? <Bot className="w-4 h-4" /> : <Cpu className="w-4 h-4" />}
       </div>
 
       {/* Content Container */}
@@ -82,12 +92,22 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         {/* Header / Role Info */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-text-primary">
-            Gemma 4 E4B
+            {isAgent ? 'AI Agent' : 'Gemma 4 E4B'}
           </span>
+          {isAgent && (
+            <span className="text-[9px] font-mono text-accent-base bg-accent-base/10 px-1.5 py-0.2 rounded border border-accent-base/20 font-medium">
+              AGENT
+            </span>
+          )}
           <span className="text-[10px] text-text-dim font-mono">
             {message.createdAt}
           </span>
         </div>
+
+        {/* Optional Agent Activity expandable details */}
+        {message.agentActivity && (
+          <AgentActivityView activity={message.agentActivity} />
+        )}
 
         {/* Message Content */}
         <div className="text-xs sm:text-sm text-text-secondary">
@@ -96,7 +116,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           ) : isGenerating ? (
             <div className="flex items-center gap-1.5 py-1 text-xs text-text-muted">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-base animate-pulse" />
-              <span>Generating response...</span>
+              <span>
+                {isAgent
+                  ? 'Agent executing task (reasoning & tools)...'
+                  : 'Generating response...'}
+              </span>
             </div>
           ) : null}
 
