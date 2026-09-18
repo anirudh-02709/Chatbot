@@ -7,12 +7,13 @@ import {
   X,
 } from 'lucide-react'
 import { ConversationList } from './ConversationList'
-import type { Conversation, ModelStatus } from '@/types'
+import type { Conversation, GenerationMode, ModelStatus } from '@/types'
 
 interface SidebarProps {
   conversations: Conversation[]
   activeConversationId: string | null
   modelStatus: ModelStatus
+  generationMode?: GenerationMode
   onSelectConversation: (id: string) => void
   onDeleteConversation: (id: string) => void
   onNewConversation: () => void
@@ -23,11 +24,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   conversations,
   activeConversationId,
   modelStatus,
+  generationMode = 'omniroute',
   onSelectConversation,
   onDeleteConversation,
   onNewConversation,
   onCloseMobile,
 }) => {
+  const runtimeLabel = generationMode === 'local_gemma' ? 'LOCAL' : 'OMNIROUTE'
+  const modelDisplayName =
+    generationMode === 'local_gemma'
+      ? modelStatus.name || 'Gemma 4 E4B'
+      : modelStatus.name || 'free-provider-fallback'
   return (
     <aside className="flex flex-col h-full w-64 bg-surface-1 border-r border-surface-border select-none">
       {/* Brand Header */}
@@ -96,15 +103,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-surface-2/60 border border-surface-border-subtle text-[11px]">
           <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="w-1.5 h-1.5 rounded-full bg-status-ready shrink-0"
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                modelStatus.status === 'ready'
+                  ? 'bg-status-ready'
+                  : modelStatus.status === 'offline'
+                  ? 'bg-status-error'
+                  : 'bg-status-warning animate-pulse'
+              }`}
               aria-hidden="true"
             />
             <span className="truncate text-text-secondary font-medium">
-              {modelStatus.name}
+              {modelDisplayName}
             </span>
           </div>
           <span className="text-[10px] font-mono text-text-dim uppercase">
-            {modelStatus.runtime}
+            {runtimeLabel}
           </span>
         </div>
 

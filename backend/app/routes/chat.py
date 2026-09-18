@@ -56,6 +56,7 @@ async def chat_endpoint(
             messages=request.messages,
             rag_context=rag_context,
             rag_meta=rag_meta,
+            mode=request.mode,
         ),
         media_type="text/event-stream",
         headers={
@@ -72,17 +73,19 @@ async def chat_endpoint(
     summary="Get sanitized model information and status",
 )
 async def model_info_endpoint(
+    mode: str = None,
     ollama_service: OllamaService = Depends(get_ollama_service),
 ):
-    return await ollama_service.get_model_info()
+    return await ollama_service.get_model_info(mode=mode)
 
 
 @router.get(
     "/health",
     response_model=HealthResponse,
-    summary="System and Ollama health check",
+    summary="System and backend health check",
 )
 async def health_endpoint(
+    mode: str = None,
     ollama_service: OllamaService = Depends(get_ollama_service),
 ):
-    return await ollama_service.check_health()
+    return await ollama_service.check_health(mode=mode)

@@ -1,4 +1,4 @@
-import type { ChatResponseProvider, Message } from '@/types'
+import type { ChatResponseProvider, GenerationMode, Message } from '@/types'
 
 export class BackendResponseProvider implements ChatResponseProvider {
   streamResponse(
@@ -8,7 +8,8 @@ export class BackendResponseProvider implements ChatResponseProvider {
       onChunk: (chunk: string) => void
       onError: (error: Error) => void
       onComplete: () => void
-    }
+    },
+    mode?: GenerationMode
   ): () => void {
     const abortController = new AbortController()
 
@@ -29,7 +30,7 @@ export class BackendResponseProvider implements ChatResponseProvider {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, ...(mode ? { mode } : {}) }),
       signal: abortController.signal,
     })
       .then(async (response) => {

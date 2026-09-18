@@ -13,6 +13,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(..., min_length=1)
+    mode: Optional[Literal["local_gemma", "omniroute"]] = None
 
 
 class ModelInfoResponse(BaseModel):
@@ -22,11 +23,14 @@ class ModelInfoResponse(BaseModel):
     loaded: bool
     runtime: str = "local"
     status: str
+    mode: str = "omniroute"
     details: Optional[dict[str, Any]] = None
 
 
 class HealthResponse(BaseModel):
     status: str
-    ollama: str
+    backend_status: str = "connected"
+    ollama: str = "connected"  # preserved for backward compatibility
+    mode: str = "omniroute"
     model_installed: bool
     model_loaded: bool

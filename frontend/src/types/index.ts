@@ -34,7 +34,12 @@ export interface Conversation {
   messages: Message[]
 }
 
-export type AppSettings = Record<string, unknown>
+export type GenerationMode = 'local_gemma' | 'omniroute'
+
+export interface AppSettings {
+  generationMode?: GenerationMode
+  [key: string]: unknown
+}
 
 export interface PersistedAppState {
   version: 1
@@ -54,8 +59,9 @@ export interface PromptStarter {
 export interface ModelStatus {
   name: string
   architecture: string
-  runtime: 'local' | 'remote'
+  runtime: 'local' | 'remote' | 'omniroute'
   status: 'ready' | 'loading' | 'offline'
+  mode?: GenerationMode
 }
 
 export interface ChatResponseProvider {
@@ -66,6 +72,7 @@ export interface ChatResponseProvider {
       onChunk: (chunk: string) => void
       onError: (error: Error) => void
       onComplete: () => void
-    }
+    },
+    mode?: GenerationMode
   ) => () => void // Returns abort/cancel function
 }

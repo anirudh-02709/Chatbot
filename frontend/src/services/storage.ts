@@ -12,7 +12,9 @@ import type {
 export const APP_STATE_STORAGE_KEY = 'ai-assistant-state'
 export const APP_STATE_STORAGE_VERSION = 1
 
-const DEFAULT_SETTINGS: AppSettings = {}
+const DEFAULT_SETTINGS: AppSettings = {
+  generationMode: 'omniroute',
+}
 
 function createDefaultAppState(): PersistedAppState {
   return {
@@ -140,7 +142,11 @@ function normalizeConversation(value: unknown): Conversation | null {
 }
 
 function normalizeSettings(value: unknown): AppSettings {
-  return isRecord(value) ? { ...value } : DEFAULT_SETTINGS
+  if (!isRecord(value)) return DEFAULT_SETTINGS
+  const mode = value.generationMode === 'local_gemma' || value.generationMode === 'omniroute'
+    ? value.generationMode
+    : 'omniroute'
+  return { ...value, generationMode: mode }
 }
 
 function normalizeAppState(value: unknown): PersistedAppState | null {

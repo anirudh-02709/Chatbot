@@ -22,6 +22,8 @@ export const App: React.FC = () => {
     activeConversation,
     messages,
     isGenerating,
+    generationMode,
+    setGenerationMode,
     createConversation,
     selectConversation,
     deleteConversation,
@@ -30,24 +32,25 @@ export const App: React.FC = () => {
     regenerateLastMessage,
   } = useChat()
 
-  // Fetch real model runtime status from backend on mount
+  // Fetch real model runtime status from backend whenever generationMode changes
   useEffect(() => {
-    fetch('/api/model')
+    fetch(`/api/model?mode=${generationMode}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {
           setModelStatus({
-            name: data.name || 'Gemma 4 E4B',
-            architecture: data.architecture || '4B Parameters',
-            runtime: data.runtime || 'local',
+            name: data.name || (generationMode === 'local_gemma' ? 'gemma4:e4b' : 'free-provider-fallback'),
+            architecture: data.architecture || (generationMode === 'local_gemma' ? '4B Parameters' : 'Fallback Combo'),
+            runtime: data.runtime || (generationMode === 'local_gemma' ? 'local' : 'omniroute'),
             status: data.status === 'ready' ? 'ready' : data.status === 'offline' ? 'offline' : 'loading',
+            mode: generationMode,
           })
         }
       })
       .catch(() => {
         setModelStatus((prev) => ({ ...prev, status: 'offline' }))
       })
-  }, [])
+  }, [generationMode])
 
   // Global keyboard shortcut: Ctrl+N (Windows/Linux) or Cmd+N (macOS) for New Thread
   useEffect(() => {
@@ -79,6 +82,11 @@ export const App: React.FC = () => {
     sendMessage(textToSend, attachments)
   }
 
+  const composerPlaceholder =
+    generationMode === 'local_gemma'
+      ? 'Draft a question or instruction for Gemma...'
+      : 'Draft a question or instruction for OmniRoute...'
+
   return (
     <AppShell
       sidebar={({ onCloseMobile }) => (
@@ -86,6 +94,7 @@ export const App: React.FC = () => {
           conversations={conversations}
           activeConversationId={activeConversationId}
           modelStatus={modelStatus}
+          generationMode={generationMode}
           onSelectConversation={selectConversation}
           onDeleteConversation={deleteConversation}
           onNewConversation={() => {
@@ -102,6 +111,8 @@ export const App: React.FC = () => {
           <WorkspaceHeader
             title={currentTitle}
             modelStatus={modelStatus}
+            generationMode={generationMode}
+            onSelectGenerationMode={setGenerationMode}
             onToggleSidebar={onToggleSidebar}
           />
 
@@ -112,6 +123,7 @@ export const App: React.FC = () => {
                 <WelcomeView
                   starters={PROMPT_STARTERS}
                   modelStatus={modelStatus}
+                  generationMode={generationMode}
                   onSelectStarter={handleSelectStarter}
                 />
               </div>
@@ -133,6 +145,7 @@ export const App: React.FC = () => {
             onStop={stopGeneration}
             isGenerating={isGenerating}
             disabled={isGenerating}
+            placeholder={composerPlaceholder}
           />
         </main>
       )}

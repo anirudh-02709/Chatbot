@@ -3,6 +3,7 @@ import type {
   AppSettings,
   Attachment,
   Conversation,
+  GenerationMode,
   Message,
   ChatResponseProvider,
   PersistedAppState,
@@ -205,11 +206,29 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
     [flushPendingChunks]
   )
 
-  // Active conversation helper
+  // Active conversation and settings helper
   const conversations = chatState.conversations
   const activeConversationId = chatState.activeConversationId
   const activeConversation = conversations.find((c) => c.id === activeConversationId)
   const messages = activeConversation ? activeConversation.messages : []
+  const generationMode: GenerationMode = (chatState.settings.generationMode as GenerationMode) || 'omniroute'
+
+  const setGenerationMode = useCallback(
+    (mode: GenerationMode) => {
+      const currentState = chatStateRef.current
+      commitChatState(
+        {
+          ...currentState,
+          settings: {
+            ...currentState.settings,
+            generationMode: mode,
+          },
+        },
+        { persist: true }
+      )
+    },
+    [commitChatState]
+  )
 
   // Abort active stream and clean up state across all conversations
   const abortActiveGeneration = useCallback((nextActiveConversationId?: string | null) => {
@@ -471,12 +490,13 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
               { persist: true }
             )
           },
-        }
+        },
+        generationMode
       )
 
       abortCurrentStream.current = cancelFn
     },
-    [commitChatState, flushPendingChunks, isGenerating, provider, queueChunk]
+    [commitChatState, flushPendingChunks, generationMode, isGenerating, provider, queueChunk]
   )
 
   const regenerateLastMessage = useCallback(() => {
@@ -605,11 +625,12 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
             { persist: true }
           )
         },
-      }
+      },
+      generationMode
     )
 
     abortCurrentStream.current = cancelFn
-  }, [commitChatState, flushPendingChunks, isGenerating, provider, queueChunk])
+  }, [commitChatState, flushPendingChunks, generationMode, isGenerating, provider, queueChunk])
 
   return {
     conversations,
@@ -617,6 +638,8 @@ export function useChat(provider: ChatResponseProvider = defaultProvider) {
     activeConversation,
     messages,
     isGenerating,
+    generationMode,
+    setGenerationMode,
     createConversation,
     selectConversation,
     deleteConversation,

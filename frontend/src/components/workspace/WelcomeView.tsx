@@ -7,11 +7,12 @@ import {
   ArrowUpRight,
   Sparkles,
 } from 'lucide-react'
-import type { PromptStarter, ModelStatus } from '@/types'
+import type { PromptStarter, ModelStatus, GenerationMode } from '@/types'
 
 interface WelcomeViewProps {
   starters: PromptStarter[]
   modelStatus: ModelStatus
+  generationMode?: GenerationMode
   onSelectStarter: (prompt: string) => void
 }
 
@@ -25,15 +26,21 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 export const WelcomeView: React.FC<WelcomeViewProps> = ({
   starters,
   modelStatus,
+  generationMode = 'omniroute',
   onSelectStarter,
 }) => {
+  const introBadgeText =
+    generationMode === 'local_gemma'
+      ? `Local assistant initialized with ${modelStatus.name || 'Gemma 4 E4B'} (Ollama)`
+      : `Connected to OmniRoute Gateway · ${modelStatus.name || 'free-provider-fallback'}`
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center max-w-3xl mx-auto px-4 py-8 w-full text-center">
       {/* Intro Header */}
       <div className="mb-7 space-y-2">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-1 border border-surface-border text-xs text-text-secondary mb-2 select-none">
           <Sparkles className="w-3.5 h-3.5 text-accent-base" />
-          <span>Local assistant initialized with {modelStatus.name}</span>
+          <span>{introBadgeText}</span>
         </div>
         <h2 className="text-2xl font-semibold text-text-primary tracking-tight">
           How can I help you today?
