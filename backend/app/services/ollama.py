@@ -431,3 +431,59 @@ class OllamaService:
             )
         finally:
             await client.aclose()
+
+    async def generate_response(
+        self,
+        messages: list[ChatMessage],
+        system_prompt: Optional[str] = None,
+        mode: Optional[str] = None,
+        temperature: float = 0.0,
+    ) -> str:
+        """
+        Non-streaming chat completion from the chosen backend (Local Gemma or OmniRoute).
+        Used by the Agent Orchestrator to obtain structured decisions.
+        """
+        target_mode = self.resolve_mode(mode)
+        sys_content = system_prompt if system_prompt is not None else self.settings.system_prompt
+        payload_messages = [{"role": "system", "content": sys_content}]
+        for msg in messages:
+            if msg.role in ("user", "assistant"):
+                payload_messages.append({"role": msg.role, "content": msg.content})
+
+        if target_mode == "local_gemma":
+            return await self._generate_ollama(payload_messages, temperature)
+        return await self._generate_omniroute(payload_messages, temperature)
+
+    async def _generate_ollama(self, messages: list[dict[str, str]], temperature: float) -> str:
+        base_url = self.settings.ollama_base_url.rstrip("/")
+        payload = {
+            "model": self.settings.ollama_model_name,
+            "messages": messages,
+            "stream": False,
+            "think": False,
+            "options": {"temperature": temperature},
+        }
+        async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds) as client:
+            res = await client.post(f"{base_url}/api/chat", json=payload)
+            if res.status_code != 200:
+                raise RuntimeError(f"Ollama returned HTTP {res.status_code}: {res.text[:200]}")
+            data = res.json()
+            return data.get("message", {}).get("content", "")
+
+    async def _generate_omniroute(self, messages: list[dict[str, str]], temperature: float) -> str:
+        base_url = self.settings.omniroute_base_url.rstrip("/")
+        payload = {
+            "model": self.settings.omniroute_model_name,
+            "messages": messages,
+            "stream": False,
+            "temperature": temperature,
+        }
+        async with httpx.AsyncClient(timeout=self.settings.request_timeout_seconds) as client:
+            res = await client.post(f"{base_url}/chat/completions", json=payload)
+            if res.status_code != 200:
+                raise RuntimeError(f"OmniRoute returned HTTP {res.status_code}: {res.text[:200]}")
+            data = res.json()
+            choices = data.get("choices", [])
+            if not choices:
+                return ""
+            return choices[0].get("message", {}).get("content", "")
