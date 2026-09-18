@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
@@ -69,6 +70,13 @@ class Settings(BaseSettings):
     rag_candidate_pool_size: int = 10
     rag_min_score: float = 0.48
     rag_max_context_characters: int = 12000
+
+    # Web Search Configuration (Goal 10.5)
+    web_search_provider: str = "tavily"
+    web_search_api_key: Optional[str] = None
+    web_search_base_url: Optional[str] = None
+    web_search_timeout_seconds: float = 10.0
+    web_search_max_results: int = 5
 
     model_config = SettingsConfigDict(
         env_file=".env",
